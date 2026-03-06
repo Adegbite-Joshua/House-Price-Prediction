@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .result-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background-color: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        select {
+            cursor: pointer;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .prediction-result {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .price {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .feature-item {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .section-title {
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+            color: #333;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 House Price Prediction</h1>
+            <p>Select your house details to get an estimated price</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-container">
+                <h2>House Details</h2>
+                <p style="color: #666; margin-bottom: 20px;">Select from the options below</p>
+                
+                <form id="predictionForm">
+                    <h3 class="section-title">Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bedrooms">Bedrooms</label>
+                            <input type="number" id="bedrooms" name="bedrooms" step="0.5" min="0" max="10" value="3" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bathrooms">Bathrooms</label>
+                            <input type="number" id="bathrooms" name="bathrooms" step="0.5" min="0" max="8" value="2.5" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="floors">Floors</label>
+                            <input type="number" id="floors" name="floors" step="0.5" min="1" max="4" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="condition">Condition</label>
+                            <select id="condition" name="condition" required>
+                                <option value="3" selected>Good (3) - Most common</option>
+                                <option value="4">Very Good (4)</option>
+                                <option value="5">Excellent (5)</option>
+                                <option value="2">Fair (2)</option>
+                                <option value="1">Poor (1)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="waterfront">Waterfront</label>
+                            <select id="waterfront" name="waterfront" required>
+                                <option value="0" selected>No (99.3% of properties)</option>
+                                <option value="1">Yes (0.7% of properties)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="view">View Quality (0-4)</label>
+                            <select id="view" name="view" required>
+                                <option value="0" selected>No view (0)</option>
+                                <option value="1">Fair (1)</option>
+                                <option value="2">Average (2)</option>
+                                <option value="3">Good (3)</option>
+                                <option value="4">Excellent (4)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title">Size & Area (sq ft)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sqft_living">Living Area</label>
+                            <input type="number" id="sqft_living" name="sqft_living" min="250" max="10000" step="10" value="2000" required>
+                            <div class="help-text">Square feet of living space</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sqft_lot">Lot Size</label>
+                            <input type="number" id="sqft_lot" name="sqft_lot" min="500" max="1000000" step="10" value="5000" required>
+                            <div class="help-text">Total square feet of land</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sqft_above">Above Ground Area</label>
+                            <input type="number" id="sqft_above" name="sqft_above" min="250" max="10000" step="10" value="1800" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sqft_basement">Basement Area</label>
+                            <input type="number" id="sqft_basement" name="sqft_basement" min="0" max="5000" step="10" value="0" required>
+                            <div class="help-text">0 if no basement</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title">Year Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="yr_built">Year Built</label>
+                            <input type="number" id="yr_built" name="yr_built" min="1900" max="2024" value="2000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="yr_renovated">Year Renovated</label>
+                            <input type="number" id="yr_renovated" name="yr_renovated" min="0" max="2024" value="0" required>
+                            <div class="help-text">Enter 0 if never renovated</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title">Location</h3>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <select id="city" name="city" required>
+                            <option value="Seattle" selected>Seattle (most common)</option>
+                            <option value="Renton">Renton</option>
+                            <option value="Bellevue">Bellevue</option>
+                            <option value="Redmond">Redmond</option>
+                            <option value="Kirkland">Kirkland</option>
+                            <option value="Issaquah">Issaquah</option>
+                            <option value="Kent">Kent</option>
+                            <option value="Auburn">Auburn</option>
+                            <option value="Sammamish">Sammamish</option>
+                            <option value="Federal Way">Federal Way</option>
+                            <option value="Shoreline">Shoreline</option>
+                            <option value="Woodinville">Woodinville</option>
+                            <option value="Maple Valley">Maple Valley</option>
+                            <option value="Mercer Island">Mercer Island</option>
+                            <option value="Burien">Burien</option>
+                            <option value="Snoqualmie">Snoqualmie</option>
+                            <option value="Kenmore">Kenmore</option>
+                            <option value="Des Moines">Des Moines</option>
+                            <option value="North Bend">North Bend</option>
+                            <option value="Covington">Covington</option>
+                            <option value="Duvall">Duvall</option>
+                            <option value="Lake Forest Park">Lake Forest Park</option>
+                            <option value="Bothell">Bothell</option>
+                            <option value="Newcastle">Newcastle</option>
+                            <option value="Tukwila">Tukwila</option>
+                            <option value="SeaTac">SeaTac</option>
+                            <option value="Vashon">Vashon</option>
+                            <option value="Enumclaw">Enumclaw</option>
+                            <option value="Carnation">Carnation</option>
+                            <option value="Normandy Park">Normandy Park</option>
+                            <option value="Clyde Hill">Clyde Hill</option>
+                            <option value="Fall City">Fall City</option>
+                            <option value="Medina">Medina</option>
+                            <option value="Black Diamond">Black Diamond</option>
+                            <option value="Ravensdale">Ravensdale</option>
+                            <option value="Pacific">Pacific</option>
+                            <option value="Algona">Algona</option>
+                            <option value="Yarrow Point">Yarrow Point</option>
+                            <option value="Skykomish">Skykomish</option>
+                            <option value="Milton">Milton</option>
+                            <option value="Preston">Preston</option>
+                            <option value="Inglewood-Finn Hill">Inglewood-Finn Hill</option>
+                            <option value="Snoqualmie Pass">Snoqualmie Pass</option>
+                            <option value="Beaux Arts Village">Beaux Arts Village</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="statezip">State/ZIP Code</label>
+                        <select id="statezip" name="statezip" required>
+                            <option value="WA 98103" selected>WA 98103 (most common)</option>
+                            <option value="WA 98052">WA 98052</option>
+                            <option value="WA 98117">WA 98117</option>
+                            <option value="WA 98115">WA 98115</option>
+                            <option value="WA 98006">WA 98006</option>
+                            <option value="WA 98059">WA 98059</option>
+                            <option value="WA 98042">WA 98042</option>
+                            <option value="WA 98034">WA 98034</option>
+                            <option value="WA 98053">WA 98053</option>
+                            <option value="WA 98074">WA 98074</option>
+                            <option value="WA 98038">WA 98038</option>
+                            <option value="WA 98023">WA 98023</option>
+                            <option value="WA 98027">WA 98027</option>
+                            <option value="WA 98058">WA 98058</option>
+                            <option value="WA 98133">WA 98133</option>
+                            <option value="WA 98125">WA 98125</option>
+                            <option value="WA 98033">WA 98033</option>
+                            <option value="WA 98155">WA 98155</option>
+                            <option value="WA 98029">WA 98029</option>
+                            <option value="WA 98040">WA 98040</option>
+                            <option value="WA 98075">WA 98075</option>
+                            <option value="WA 98056">WA 98056</option>
+                            <option value="WA 98092">WA 98092</option>
+                            <option value="WA 98144">WA 98144</option>
+                            <option value="WA 98118">WA 98118</option>
+                            <option value="WA 98126">WA 98126</option>
+                            <option value="WA 98004">WA 98004</option>
+                            <option value="WA 98065">WA 98065</option>
+                            <option value="WA 98112">WA 98112</option>
+                            <option value="WA 98199">WA 98199</option>
+                            <option value="WA 98001">WA 98001</option>
+                            <option value="WA 98168">WA 98168</option>
+                            <option value="WA 98028">WA 98028</option>
+                            <option value="WA 98031">WA 98031</option>
+                            <option value="WA 98106">WA 98106</option>
+                            <option value="WA 98122">WA 98122</option>
+                            <option value="WA 98116">WA 98116</option>
+                            <option value="WA 98072">WA 98072</option>
+                            <option value="WA 98166">WA 98166</option>
+                            <option value="WA 98107">WA 98107</option>
+                            <option value="WA 98136">WA 98136</option>
+                            <option value="WA 98198">WA 98198</option>
+                            <option value="WA 98146">WA 98146</option>
+                            <option value="WA 98177">WA 98177</option>
+                            <option value="WA 98077">WA 98077</option>
+                            <option value="WA 98008">WA 98008</option>
+                            <option value="WA 98045">WA 98045</option>
+                            <option value="WA 98119">WA 98119</option>
+                            <option value="WA 98105">WA 98105</option>
+                            <option value="WA 98178">WA 98178</option>
+                            <option value="WA 98003">WA 98003</option>
+                            <option value="WA 98108">WA 98108</option>
+                            <option value="WA 98019">WA 98019</option>
+                            <option value="WA 98030">WA 98030</option>
+                            <option value="WA 98007">WA 98007</option>
+                            <option value="WA 98002">WA 98002</option>
+                            <option value="WA 98011">WA 98011</option>
+                            <option value="WA 98109">WA 98109</option>
+                            <option value="WA 98005">WA 98005</option>
+                            <option value="WA 98070">WA 98070</option>
+                            <option value="WA 98055">WA 98055</option>
+                            <option value="WA 98022">WA 98022</option>
+                            <option value="WA 98188">WA 98188</option>
+                            <option value="WA 98102">WA 98102</option>
+                            <option value="WA 98014">WA 98014</option>
+                            <option value="WA 98032">WA 98032</option>
+                            <option value="WA 98148">WA 98148</option>
+                            <option value="WA 98057">WA 98057</option>
+                            <option value="WA 98024">WA 98024</option>
+                            <option value="WA 98039">WA 98039</option>
+                            <option value="WA 98010">WA 98010</option>
+                            <option value="WA 98051">WA 98051</option>
+                            <option value="WA 98047">WA 98047</option>
+                            <option value="WA 98288">WA 98288</option>
+                            <option value="WA 98050">WA 98050</option>
+                            <option value="WA 98354">WA 98354</option>
+                            <option value="WA 98068">WA 98068</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <select id="country" name="country" required>
+                            <option value="USA" selected>USA</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" id="predictBtn">Get Price Estimate</button>
+                    </div>
+                </form>
+                
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 10px;">Calculating estimate...</p>
+                </div>
+                
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+            
+            <div class="result-container">
+                <h2>Price Estimate</h2>
+                
+                <div class="prediction-result" id="predictionResult">
+                    <div id="initialMessage">
+                        <p>👋 Select your house details and click the button to see your estimated price</p>
+                    </div>
+                    
+                    <div id="resultContent" style="display: none;">
+                        <p>Estimated Price:</p>
+                        <div class="price" id="estimatedPrice">$0.00</div>
+                        <p id="timestamp"></p>
+                    </div>
+                </div>
+                
+                <div class="info-box" id="modelInfo">
+                    <p>📊 Loading model information...</p>
+                </div>
+                
+                <div id="inputFeatures" class="feature-list" style="display: none;">
+                    <h3 style="grid-column: span 2; margin-bottom: 10px;">Your Selected Features:</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch model info on page load
+        async function fetchModelInfo() {
+            try {
+                const response = await fetch('/api/model-info');
+                const data = await response.json();
+                
+                const modelInfoDiv = document.getElementById('modelInfo');
+                if (data.error) {
+                    modelInfoDiv.innerHTML = `<p>⚠️ ${data.error}</p>`;
+                } else {
+                    modelInfoDiv.innerHTML = `
+                        <p><strong>Model Type:</strong> ${data.model_type || 'Unknown'}</p>
+                        <p><strong>Best Score:</strong> ${data.best_score ? data.best_score.toFixed(4) : 'N/A'}</p>
+                        <p><strong>Trained:</strong> ${data.training_date ? new Date(data.training_date).toLocaleDateString() : 'Unknown'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching model info:', error);
+                document.getElementById('modelInfo').innerHTML = '<p>⚠️ Could not load model information</p>';
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                bedrooms: document.getElementById('bedrooms').value,
+                bathrooms: document.getElementById('bathrooms').value,
+                sqft_living: document.getElementById('sqft_living').value,
+                sqft_lot: document.getElementById('sqft_lot').value,
+                floors: document.getElementById('floors').value,
+                waterfront: document.getElementById('waterfront').value,
+                view: document.getElementById('view').value,
+                condition: document.getElementById('condition').value,
+                sqft_above: document.getElementById('sqft_above').value,
+                sqft_basement: document.getElementById('sqft_basement').value,
+                yr_built: document.getElementById('yr_built').value,
+                yr_renovated: document.getElementById('yr_renovated').value,
+                city: document.getElementById('city').value,
+                statezip: document.getElementById('statezip').value,
+                country: document.getElementById('country').value
+            };
+            
+            // Show loading, hide results and error
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('predictBtn').disabled = true;
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('initialMessage').style.display = 'none';
+            document.getElementById('resultContent').style.display = 'none';
+            document.getElementById('inputFeatures').style.display = 'none';
+            
+            try {
+                // Make API request
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display prediction
+                    document.getElementById('estimatedPrice').textContent = data.formatted_price;
+                    document.getElementById('timestamp').textContent = 
+                        `Estimate generated: ${new Date(data.timestamp).toLocaleString()}`;
+                    
+                    // Display input features
+                    const featureList = document.getElementById('inputFeatures');
+                    featureList.innerHTML = '<h3 style="grid-column: span 2; margin-bottom: 10px;">Your Selected Features:</h3>';
+                    
+                    for (const [key, value] of Object.entries(data.input_features)) {
+                        if (key !== 'street') { // Explicitly ignore street
+                            const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            featureList.innerHTML += `
+                                <div class="feature-item">
+                                    <strong>${formattedKey}:</strong> ${value}
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    document.getElementById('resultContent').style.display = 'block';
+                    featureList.style.display = 'grid';
+                } else {
+                    // Show error
+                    document.getElementById('errorMessage').textContent = data.error || 'An error occurred';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('initialMessage').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error: Could not connect to server';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('initialMessage').style.display = 'block';
+                console.error('Error:', error);
+            } finally {
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('predictBtn').disabled = false;
+            }
+        });
+        
+        // Load model info when page loads
+        fetchModelInfo();
+    </script>
+</body>
+</html>
