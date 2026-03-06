@@ -11,6 +11,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install --no-cache-dir gunicorn==21.2.0  # Add this line
+
+
 COPY . .
 
 CMD gunicorn app:app
