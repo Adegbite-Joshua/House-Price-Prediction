@@ -16,4 +16,8 @@ RUN pip install --no-cache-dir gunicorn==21.2.0  # Add this line
 
 COPY . .
 
-CMD gunicorn app:app
+# Expose port
+EXPOSE 10000
+
+# Run the application
+CMD gunicorn app:app --bind 0.0.0.0:$PORT
