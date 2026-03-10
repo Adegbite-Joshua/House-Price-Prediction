@@ -109,6 +109,10 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 
+import sys
+
+sys.modules['__main__'].BasementTransformer = BasementTransformer
+sys.modules['__main__'].NumericalTransformer = NumericalTransformer
 
 # Load the model package
 try:
