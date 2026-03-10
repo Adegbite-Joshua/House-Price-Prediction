@@ -113,6 +113,7 @@ import sys
 
 sys.modules['__main__'].BasementTransformer = BasementTransformer
 sys.modules['__main__'].NumericalTransformer = NumericalTransformer
+sys.modules['__main__'].iqr_cap = iqr_cap
 
 # Load the model package
 try:
